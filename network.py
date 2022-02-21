@@ -8,14 +8,14 @@ def ImageRegressor():
         input_tensor=preprocessed,
         weights='imagenet',
     )
-    encoder.summary()
     encoder.trainable = False
     encoded = encoder(preprocessed)
 
-    encoded = tf.keras.layers.Conv2D(1, 1)(encoded)
-    outputs = tf.keras.layers.GlobalAveragePooling2D()(encoded)
-    print(outputs.shape)
-    outputs = tf.squeeze(tf.keras.layers.Dense(1)(outputs))
+    outputs = tf.keras.layers.BatchNormalization()(encoded)
+    outputs = tf.keras.layers.Conv2D(1, 1)(outputs)
+    outputs = tf.keras.layers.GlobalAveragePooling2D()(outputs)
+    outputs = tf.keras.layers.Dense(1)(outputs)
+    outputs = tf.squeeze(outputs)
 
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
     return model
