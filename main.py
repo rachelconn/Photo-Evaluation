@@ -6,9 +6,12 @@ from model import ImageRegression
 
 TRAINING_DATASET_FOLDER = r'E:\photography\exposure\training\INPUT_IMAGES'
 VALIDATION_DATASET_FOLDER = r'E:\photography\exposure\validation\INPUT_IMAGES'
+TESTING_DATASET_FOLDER = r'E:\photography\exposure\testing\INPUT_IMAGES'
 
 training_dataset = load_dataset(TRAINING_DATASET_FOLDER)
 validation_dataset = load_dataset(VALIDATION_DATASET_FOLDER)
+testing_dataset = load_dataset(TESTING_DATASET_FOLDER)
 
 model = ImageRegression()
 model.train(training_dataset, validation_dataset, 50)
+# model.test(testing_dataset)

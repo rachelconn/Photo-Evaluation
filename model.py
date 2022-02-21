@@ -1,4 +1,5 @@
 import os
+from matplotlib import pyplot as plt
 import tensorflow as tf
 from network import ImageRegressor
 
@@ -7,7 +8,7 @@ class ImageRegression:
         self.network = ImageRegressor()
 
         self.optimizer = tf.keras.optimizers.Adam(
-            learning_rate=3e-4,
+            learning_rate=3e-5,
         )
         self.loss = tf.keras.losses.MeanSquaredError()
         self.network.compile(
@@ -15,6 +16,7 @@ class ImageRegression:
             loss=self.loss,
         )
         # self.network.summary()
+        self.load()
 
     def train(self, training_dataset, validation_dataset, num_epochs):
         training_dataset = training_dataset.shuffle(100).batch(4).prefetch(tf.data.AUTOTUNE)
@@ -36,7 +38,24 @@ class ImageRegression:
                 print(f'Achieved new best validation loss ({val_loss}), saving...')
                 self.save(epoch)
 
+    def test(self, testing_dataset):
+        testing_dataset = testing_dataset.batch(1)
+        for image, exposure in testing_dataset:
+            pred = self.network(image)
+            plt.imshow(tf.squeeze(image))
+            plt.title(f'Real: {exposure[0]}\nPredicted: {pred:3f}')
+            plt.show()
+
     def save(self, epoch):
         path = os.path.join('trained', f'model_{epoch}', 'model')
         self.network.save_weights(path)
         print(f'Saved model to {path}.')
+
+    def load(self):
+        path = os.path.join('trained', 'model', 'model')
+        try:
+            self.network.load_weights(path)
+            print(f'Loaded existing model from {path}')
+        except:
+            print('Created new model')
+            return
