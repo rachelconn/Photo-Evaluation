@@ -3,9 +3,14 @@ from matplotlib import pyplot as plt
 import tensorflow as tf
 from network import ImageRegressor
 
+augmentations = tf.keras.Sequential([
+    tf.keras.layers.RandomFlip("horizontal"),
+    tf.keras.layers.RandomRotation(0.1),
+])
+
 class ImageRegression:
     def __init__(self):
-        self.network = ImageRegressor()
+        self.network = ImageRegressor(augmentations=augmentations)
 
         self.optimizer = tf.keras.optimizers.Adam(
             learning_rate=3e-5,
@@ -16,7 +21,6 @@ class ImageRegression:
             loss=self.loss,
         )
         # self.network.summary()
-        self.load()
 
     def train(self, training_dataset, validation_dataset, num_epochs):
         training_dataset = training_dataset.shuffle(100).batch(4).prefetch(tf.data.AUTOTUNE)
