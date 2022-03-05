@@ -1,16 +1,13 @@
 import os
 from matplotlib import pyplot as plt
 import tensorflow as tf
-from network import ImageRegressor
-
-augmentations = tf.keras.Sequential([
-    tf.keras.layers.RandomFlip("horizontal"),
-    tf.keras.layers.RandomRotation(0.1),
-])
+from network import ImageRegressor, ImageBinaryClassifier
 
 class ImageRegression:
-    def __init__(self):
-        self.network = ImageRegressor(augmentations=augmentations)
+    def __init__(self, batch_size=4):
+        self.batch_size = batch_size
+
+        self.network = ImageRegressor(256)
 
         self.optimizer = tf.keras.optimizers.Adam(
             learning_rate=3e-5,
@@ -23,8 +20,8 @@ class ImageRegression:
         # self.network.summary()
 
     def train(self, training_dataset, validation_dataset, num_epochs):
-        training_dataset = training_dataset.shuffle(100).batch(4).prefetch(tf.data.AUTOTUNE)
-        validation_dataset = validation_dataset.batch(4).cache()
+        training_dataset = training_dataset.shuffle(100).batch(self.batch_size).prefetch(tf.data.AUTOTUNE)
+        validation_dataset = validation_dataset.batch(self.batch_size).cache()
 
         best_val_loss = float('inf')
 
@@ -63,3 +60,19 @@ class ImageRegression:
         except:
             print('Created new model')
             return
+
+class ImageBinaryClassification(ImageRegression):
+    def __init__(self, batch_size):
+        self.batch_size = batch_size
+
+        self.network = ImageBinaryClassifier(512)
+
+        self.optimizer = tf.keras.optimizers.Adam(
+            learning_rate=3e-4,
+        )
+        self.loss = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+        self.network.compile(
+            optimizer=self.optimizer,
+            loss=self.loss,
+            metrics=['accuracy'],
+        )

@@ -1,22 +1,19 @@
 import tensorflow as tf
 
-def ImageRegressor(augmentations):
+def ImageRegressor(input_size):
     """
         Image regressor using a transformer, adapted from:
         https://keras.io/examples/vision/image_classification_with_vision_transformer/
     """
-    input_size = 256
+    # Note: shape should be (input_size, input_size, 3) if augmentation doesn't resize
     inputs = tf.keras.Input(shape=(input_size, input_size, 3))
-    patch_size = 32
+    patch_size = input_size // 8
     num_patches = (input_size // patch_size) ** 2
     projection_dim = 64
     num_transformer_layers = 6
     transformer_layer_sizes = [128, 64]
     num_heads = 4
     num_mlp_layers = 3
-
-    # Perform augmentation during training
-    inputs = augmentations(inputs)
 
     # Encode into patches with positional embeddings
     patches = tf.image.extract_patches(
@@ -65,3 +62,6 @@ def ImageRegressor(augmentations):
 
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
     return model
+
+def ImageBinaryClassifier(input_size):
+    return ImageRegressor(input_size)
