@@ -37,7 +37,7 @@ def load_exposure_dataset(folder):
 
     return dataset
 
-def get_realblur_dataset_item(filename, label):
+def get_blur_dataset_item(filename, label):
     # Load image
     image = tf.keras.utils.load_img(filename)
     image = np.array(image) / 255
@@ -54,7 +54,7 @@ def generate_realblur_dataset(list_file):
 
 def load_realblur_dataset(list_file):
         dataset = tf.data.Dataset.from_generator(
-            generate_blur_dataset,
+            generate_realblur_dataset,
             args=(list_file,),
             output_signature=(
                 tf.TensorSpec(shape=(None, None, 3), dtype=tf.float32),
