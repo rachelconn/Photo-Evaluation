@@ -1,15 +1,15 @@
 import os
 import matplotlib.pyplot as plt
 import tensorflow as tf
-from data_loader import load_exposure_dataset, load_realblur_dataset
+from data_loader import load_exposure_dataset, load_certh_training_dataset, load_certh_testing_dataset
 from model import ImageRegression, ImageBinaryClassification
 
 EXPOSURE_TRAINING_DATASET_FOLDER = r'E:\photography\exposure\training\INPUT_IMAGES'
 EXPOSURE_VALIDATION_DATASET_FOLDER = r'E:\photography\exposure\validation\INPUT_IMAGES'
 EXPOSURE_TESTING_DATASET_FOLDER = r'E:\photography\exposure\testing\INPUT_IMAGES'
 
-BLUR_TRAINING_DATASET_FILE = r'E:\photography\blur\RealBlur_J_train_list.txt'
-BLUR_TESTING_DATASET_FILE = r'E:\photography\blur\RealBlur_J_test_list.txt'
+BLUR_TRAINING_DATASET_FILE = r'E:\photography\blur\CERTH_ImageBlurDataset\TrainingSet'
+BLUR_TESTING_DATASET_FILE = r'E:\photography\blur\CERTH_ImageBlurDataset\EvaluationSet\NaturalBlurSet'
 
 def run_exposure_model(train=True):
     augmentations = tf.keras.Sequential([
@@ -32,9 +32,9 @@ def run_blur_model(train=True):
         tf.keras.layers.RandomFlip('horizontal'),
     ])
 
-    blur_training_dataset = load_realblur_dataset(BLUR_TRAINING_DATASET_FILE)
+    blur_training_dataset = load_certh_training_dataset(BLUR_TRAINING_DATASET_FILE)
     blur_training_dataset = blur_training_dataset.map(lambda x, y: (augmentations(x), y))
-    blur_testing_dataset = load_realblur_dataset(BLUR_TESTING_DATASET_FILE)
+    blur_testing_dataset = load_certh_testing_dataset(BLUR_TESTING_DATASET_FILE)
     blur_testing_dataset = blur_testing_dataset.map(lambda x, y: (tf.image.crop_to_bounding_box(x, 0, 0, 512, 512), y))
 
     model = ImageBinaryClassification(1)

@@ -1,5 +1,8 @@
+import itertools
 import os
+import random
 import numpy as np
+from openpyxl import load_workbook
 import tensorflow as tf
 
 def get_exposure_dataset_item(filename):
@@ -63,3 +66,49 @@ def load_realblur_dataset(list_file):
         )
 
         return dataset
+
+def generate_certh_training_dataset(base_folder):
+    folders = {
+        os.path.join(base_folder, b'Undistorted'): 0,
+        os.path.join(base_folder, b'Artificially-Blurred'): 1,
+        os.path.join(base_folder, b'Naturally-Blurred'): 1,
+    }
+    files = [(os.path.join(folder, filename), label) for folder, label in folders.items() for filename in os.listdir(folder)]
+    random.shuffle(files)
+    for filename, label in files:
+        yield get_blur_dataset_item(filename, label)
+
+def load_certh_training_dataset(folder):
+    dataset = tf.data.Dataset.from_generator(
+        generate_certh_training_dataset,
+        args=(folder,),
+        output_signature=(
+            tf.TensorSpec(shape=(None, None, 3), dtype=tf.float32),
+            tf.TensorSpec(shape=(), dtype=tf.float32),
+        ),
+    )
+
+    return dataset
+
+def generate_certh_testing_dataset(folder):
+    folder = folder.decode('utf-8')
+    label_folder, label_file = os.path.split(folder)
+    label_file = f'{label_file}.xlsx'
+    label_file_path = os.path.join(label_folder, label_file)
+    labels = load_workbook(label_file_path, read_only=True).get_sheet_by_name('Φύλλο1')
+    for name, label in labels.iter_rows(min_row=2):
+        filename = os.path.join(folder, f'{name.value}.jpg')
+        label = 1 if label.value == 1 else 0
+        yield get_blur_dataset_item(filename, label)
+
+def load_certh_testing_dataset(folder):
+    dataset = tf.data.Dataset.from_generator(
+        generate_certh_testing_dataset,
+        args=(folder,),
+        output_signature=(
+            tf.TensorSpec(shape=(None, None, 3), dtype=tf.float32),
+            tf.TensorSpec(shape=(), dtype=tf.float32),
+        ),
+    )
+
+    return dataset
