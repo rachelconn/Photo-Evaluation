@@ -65,3 +65,26 @@ def ImageRegressor(input_size):
 
 def ImageBinaryClassifier(input_size):
     return ImageRegressor(input_size)
+
+def ResNetImageRegressor():
+    inputs = tf.keras.Input(shape=(None, None, 3))
+    preprocessed = tf.keras.applications.resnet50.preprocess_input(inputs)
+    encoder = tf.keras.applications.resnet50.ResNet50(
+        include_top=False,
+        input_tensor=preprocessed,
+        weights='imagenet',
+    )
+    encoder.trainable = False
+    encoded = encoder(preprocessed)
+
+    outputs = tf.keras.layers.BatchNormalization()(encoded)
+    outputs = tf.keras.layers.Conv2D(2048, 3, padding='same')(outputs)
+    outputs = tf.keras.layers.ReLU()(outputs)
+    outputs = tf.keras.layers.Conv2D(2048, 3, padding='same')(outputs)
+    outputs = outputs + encoded
+    outputs = tf.keras.layers.GlobalAveragePooling2D()(outputs)
+    outputs = tf.keras.layers.Dense(1)(outputs)
+    outputs = tf.nn.sigmoid(outputs)
+
+    model = tf.keras.Model(inputs=inputs, outputs=outputs)
+    return model
