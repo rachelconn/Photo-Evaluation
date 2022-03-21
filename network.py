@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-def ImageRegressor(input_size):
+def ImageRegressor(input_size, output_activation=None):
     """
         Image regressor using a transformer, adapted from:
         https://keras.io/examples/vision/image_classification_with_vision_transformer/
@@ -58,33 +58,55 @@ def ImageRegressor(input_size):
     outputs = tf.keras.layers.Dropout(0.3)(outputs)
     outputs = tf.keras.layers.Dense(1024, activation=tf.nn.relu)(outputs)
     outputs = tf.keras.layers.Dropout(0.3)(outputs)
-    outputs = tf.keras.layers.Dense(1)(outputs)
+    outputs = tf.keras.layers.Dense(1, activation=output_activation)(outputs)
 
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
     return model
 
 def ImageBinaryClassifier(input_size):
-    return ImageRegressor(input_size)
+    return ImageRegressor(input_size, output_activation='sigmoid')
 
 def ResNetImageRegressor():
     inputs = tf.keras.Input(shape=(None, None, 3))
-    preprocessed = tf.keras.applications.resnet50.preprocess_input(inputs)
     encoder = tf.keras.applications.resnet50.ResNet50(
         include_top=False,
-        input_tensor=preprocessed,
-        weights='imagenet',
+        input_tensor=inputs,
+        weights=None,
+        pooling='max',
     )
-    encoder.trainable = False
-    encoded = encoder(preprocessed)
-
-    outputs = tf.keras.layers.BatchNormalization()(encoded)
-    outputs = tf.keras.layers.Conv2D(2048, 3, padding='same')(outputs)
-    outputs = tf.keras.layers.ReLU()(outputs)
-    outputs = tf.keras.layers.Conv2D(2048, 3, padding='same')(outputs)
-    outputs = outputs + encoded
-    outputs = tf.keras.layers.GlobalAveragePooling2D()(outputs)
-    outputs = tf.keras.layers.Dense(1)(outputs)
-    outputs = tf.nn.sigmoid(outputs)
+    encoded = encoder(inputs)
+    outputs = tf.keras.layers.Dense(1, activation='sigmoid')(encoded)
 
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
+    return model
+
+def CNNImageRegressor():
+    model = tf.keras.Sequential()
+
+    # Convolutional layer and maxpool layer 1
+    model.add(tf.keras.layers.Conv2D(32,(3,3),activation='relu',input_shape=(256, 256, 3)))
+    model.add(tf.keras.layers.MaxPool2D(2,2))
+
+    # Convolutional layer and maxpool layer 2
+    model.add(tf.keras.layers.Conv2D(64,(3,3),activation='relu'))
+    model.add(tf.keras.layers.MaxPool2D(2,2))
+
+    # Convolutional layer and maxpool layer 3
+    model.add(tf.keras.layers.Conv2D(128,(3,3),activation='relu'))
+    model.add(tf.keras.layers.MaxPool2D(2,2))
+
+    # Convolutional layer and maxpool layer 4
+    model.add(tf.keras.layers.Conv2D(128,(3,3),activation='relu'))
+    model.add(tf.keras.layers.MaxPool2D(2,2))
+
+    # This layer flattens the resulting image array to 1D array
+    model.add(tf.keras.layers.Flatten())
+
+    # Hidden layer with 512 neurons and Rectified Linear Unit activation function 
+    model.add(tf.keras.layers.Dense(512,activation='relu'))
+
+    # Output layer with single neuron which gives 0 for Cat or 1 for Dog 
+    #Here we use sigmoid activation function which makes our model output to lie between 0 and 1
+    model.add(tf.keras.layers.Dense(1,activation='sigmoid'))
+
     return model

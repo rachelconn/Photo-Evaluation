@@ -1,7 +1,7 @@
 import os
 from matplotlib import pyplot as plt
 import tensorflow as tf
-from network import ImageRegressor, ImageBinaryClassifier, ResNetImageRegressor
+from network import ImageRegressor, ImageBinaryClassifier, ResNetImageRegressor, CNNImageRegressor
 
 class ImageRegression:
     def __init__(self, batch_size=4):
@@ -36,10 +36,6 @@ class ImageRegression:
                 x=training_dataset,
                 validation_data=validation_dataset,
                 epochs=1,
-                class_weight={
-                    0: 370 / 630,
-                    1: 630 / 370,
-                },
             )
             print(f'New LR: {self.network.optimizer._decayed_lr(tf.float32).numpy()}')
 
@@ -77,12 +73,31 @@ class ImageBinaryClassification(ImageRegression):
         self.batch_size = batch_size
 
         if use_resnet:
-            self.network = ResNetImageRegressor()
+            self.network = CNNImageRegressor()
         else:
             self.network = ImageBinaryClassifier(512)
 
+        """
+        Cats + Dogs
+            LR for CNN:
+                0.0005 (0.79 acc)
+            LR for resnet:
+                0.0005 (0.53 acc)
+                0.00025 (0.57)
+                0.00001 (each epoch: 0.56, 0.62, 0.68, 0.75)
+        Blur
+            CNN:
+                0.00025 (0.58)
+                0.0001  (0.61)
+            Resnet:
+                0.000001 (0.5, not just guessing one label)
+                0.0000005 (same)
+        RealBlur
+            CNN:
+                0.00005 (0.90)
+        """
         self.optimizer = tf.keras.optimizers.Adam(
-            learning_rate=tf.keras.optimizers.schedules.ExponentialDecay(3e-2, 250, 0.9),
+            learning_rate=0.00005,
         )
 
         self.loss = tf.keras.losses.BinaryCrossentropy(from_logits=False)
