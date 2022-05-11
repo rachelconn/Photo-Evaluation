@@ -112,3 +112,26 @@ def load_certh_testing_dataset(folder):
     )
 
     return dataset
+
+def generate_sidd_dataset(folder):
+    folder = folder.decode('utf-8')
+    for subfolder in os.listdir(folder):
+        subfolder_path = os.path.join(folder, subfolder)
+        for filename in os.listdir(subfolder_path):
+            _, label_string, *_ = filename.split('_')
+            image = tf.keras.utils.load_img(os.path.join(subfolder_path, filename))
+            image = np.array(image) / 255
+            label = 1 if label_string == 'NOISY' else 0
+            yield image, label
+
+def load_sidd_dataset(folder):
+    dataset = tf.data.Dataset.from_generator(
+        generate_sidd_dataset,
+        args=(folder,),
+        output_signature=(
+            tf.TensorSpec(shape=(None, None, 3), dtype=tf.float32),
+            tf.TensorSpec(shape=(), dtype=tf.uint8),
+        ),
+    )
+
+    return dataset
