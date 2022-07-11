@@ -4,10 +4,11 @@ import tensorflow as tf
 from network import ImageRegressor, ImageBinaryClassifier, ResNetImageRegressor, CNNImageRegressor
 
 class ImageRegression:
-    def __init__(self, batch_size=4):
+    def __init__(self, batch_size, model_name):
         self.batch_size = batch_size
+        self.model_name = model_name
 
-        self.network = ImageRegressor(256)
+        self.network = CNNImageRegressor()
 
         self.optimizer = tf.keras.optimizers.Adam(
             learning_rate=3e-5,
@@ -20,7 +21,7 @@ class ImageRegression:
         # self.network.summary()
 
     def train(self, training_dataset, validation_dataset, num_epochs):
-        training_dataset = training_dataset.shuffle(100).batch(self.batch_size).prefetch(tf.data.AUTOTUNE)
+        training_dataset = training_dataset.shuffle(10).batch(self.batch_size).prefetch(tf.data.AUTOTUNE)
         validation_dataset = validation_dataset.batch(self.batch_size).cache()
 
         best_val_loss = float('inf')
@@ -51,11 +52,11 @@ class ImageRegression:
         for image, exposure in testing_dataset:
             pred = self.network(image)
             plt.imshow(tf.squeeze(image))
-            plt.title(f'Real: {exposure[0]}\nPredicted: {pred:3f}')
+            plt.title(f'Real: {exposure[0]}\nPredicted: {pred.numpy()[0][0]:3f}')
             plt.show()
 
     def save(self, epoch):
-        path = os.path.join('trained', f'model_{epoch}', 'model')
+        path = os.path.join('trained', self.model_name, f'epoch_{epoch}', 'model')
         self.network.save_weights(path)
         print(f'Saved model to {path}.')
 
@@ -69,7 +70,8 @@ class ImageRegression:
             return
 
 class ImageBinaryClassification(ImageRegression):
-    def __init__(self, batch_size, use_resnet=True):
+    def __init__(self, batch_size, model_name, use_resnet=True):
+        super().__init__(batch_size, model_name)
         self.batch_size = batch_size
 
         if use_resnet:

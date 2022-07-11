@@ -84,29 +84,31 @@ def CNNImageRegressor():
     model = tf.keras.Sequential()
 
     # Convolutional layer and maxpool layer 1
-    model.add(tf.keras.layers.Conv2D(32,(3,3),activation='relu',input_shape=(256, 256, 3)))
+    model.add(tf.keras.layers.Conv2D(16, (3,3), activation='relu', input_shape=(None, None, 3)))
     model.add(tf.keras.layers.MaxPool2D(2,2))
 
-    # Convolutional layer and maxpool layer 2
-    model.add(tf.keras.layers.Conv2D(64,(3,3),activation='relu'))
+    model.add(tf.keras.layers.Conv2D(32, (3,3), activation='relu', input_shape=(None, None, 3)))
     model.add(tf.keras.layers.MaxPool2D(2,2))
 
-    # Convolutional layer and maxpool layer 3
-    model.add(tf.keras.layers.Conv2D(128,(3,3),activation='relu'))
+    model.add(tf.keras.layers.Conv2D(32, (3,3), activation='relu', input_shape=(None, None, 3)))
+    model.add(tf.keras.layers.MaxPool2D(2,2))
+    # # Convolutional layer and maxpool layer 2
+    model.add(tf.keras.layers.Conv2D(64, (3,3), activation='relu'))
     model.add(tf.keras.layers.MaxPool2D(2,2))
 
-    # Convolutional layer and maxpool layer 4
-    model.add(tf.keras.layers.Conv2D(128,(3,3),activation='relu'))
+    # # Convolutional layer and maxpool layer 3
+    model.add(tf.keras.layers.Conv2D(128, (3,3), activation='relu'))
     model.add(tf.keras.layers.MaxPool2D(2,2))
 
-    # This layer flattens the resulting image array to 1D array
-    model.add(tf.keras.layers.Flatten())
+    # # Convolutional layer and maxpool layer 4
+    model.add(tf.keras.layers.Conv2D(128, (3,3), activation='relu'))
+    model.add(tf.keras.layers.MaxPool2D(2,2))
 
-    # Hidden layer with 512 neurons and Rectified Linear Unit activation function 
+    # Global pooling over each channel
+    model.add(tf.keras.layers.GlobalAveragePooling2D())
     model.add(tf.keras.layers.Dense(512,activation='relu'))
 
-    # Output layer with single neuron which gives 0 for Cat or 1 for Dog 
-    #Here we use sigmoid activation function which makes our model output to lie between 0 and 1
-    model.add(tf.keras.layers.Dense(1,activation='sigmoid'))
+    # Output binary prediction in range [0, 1]
+    # model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
 
     return model
