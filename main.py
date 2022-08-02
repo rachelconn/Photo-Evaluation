@@ -29,12 +29,10 @@ NOISE_DATASET_FOLDER = r'E:\photography\noise\Data'
 def run_exposure_model(train=True):
     if train:
         augmentations = tf.keras.Sequential([
-            tf.keras.layers.RandomCrop(256, 256),
             tf.keras.layers.RandomFlip('horizontal'),
         ])
     else:
         augmentations = tf.keras.Sequential([
-            tf.keras.layers.Resizing(256, 256),
         ])
 
     exposure_training_dataset = load_exposure_dataset(EXPOSURE_TRAINING_DATASET_FOLDER)
@@ -49,16 +47,14 @@ def run_exposure_model(train=True):
 
 def run_blur_model(train=True):
     augmentations = tf.keras.Sequential([
-        tf.keras.layers.RandomCrop(256, 256),
         tf.keras.layers.RandomFlip('horizontal'),
     ])
 
     blur_training_dataset = load_realblur_dataset(BLUR_TRAINING_DATASET_FILE)
     blur_training_dataset = blur_training_dataset.map(lambda x, y: (augmentations(x), y))
     blur_testing_dataset = load_realblur_dataset(BLUR_TESTING_DATASET_FILE)
-    blur_testing_dataset = blur_testing_dataset.map(lambda x, y: (tf.image.crop_to_bounding_box(x, 0, 0, 256, 256), y))
 
-    model = ImageBinaryClassification(4, args.name)
+    model = ImageBinaryClassification(1, args.name)
     if train:
         model.train(blur_training_dataset, blur_testing_dataset, 100)
     model.test(blur_testing_dataset)
@@ -69,7 +65,7 @@ def run_noise_model(train=True):
     noise_training_dataset = noise_dataset.take(NUM_TRAINING_IMAGES)
     noise_testing_dataset = noise_dataset.skip(NUM_TRAINING_IMAGES)
 
-    model = ImageBinaryClassification(1, name)
+    model = ImageBinaryClassification(1, args.name)
     if train:
         model.train(noise_training_dataset, noise_testing_dataset, 100)
 

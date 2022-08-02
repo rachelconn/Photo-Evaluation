@@ -80,35 +80,29 @@ def ResNetImageRegressor():
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
     return model
 
-def CNNImageRegressor():
+def CNNImageRegressor(activation=None):
     model = tf.keras.Sequential()
 
-    # Convolutional layer and maxpool layer 1
-    model.add(tf.keras.layers.Conv2D(16, (3,3), activation='relu', input_shape=(None, None, 3)))
-    model.add(tf.keras.layers.MaxPool2D(2,2))
+    channels = 16
+    blocks = [1, 3]
 
-    model.add(tf.keras.layers.Conv2D(32, (3,3), activation='relu', input_shape=(None, None, 3)))
-    model.add(tf.keras.layers.MaxPool2D(2,2))
+    model.add(tf.keras.layers.InputLayer((None, None, 3)))
 
-    model.add(tf.keras.layers.Conv2D(32, (3,3), activation='relu', input_shape=(None, None, 3)))
-    model.add(tf.keras.layers.MaxPool2D(2,2))
-    # # Convolutional layer and maxpool layer 2
-    model.add(tf.keras.layers.Conv2D(64, (3,3), activation='relu'))
-    model.add(tf.keras.layers.MaxPool2D(2,2))
+    for layers_for_block in blocks:
+        for _ in range(layers_for_block):
+            model.add(tf.keras.layers.Conv2D(channels, (3,3), activation='relu'))
+            model.add(tf.keras.layers.MaxPool2D(2,2))
 
-    # # Convolutional layer and maxpool layer 3
-    model.add(tf.keras.layers.Conv2D(128, (3,3), activation='relu'))
-    model.add(tf.keras.layers.MaxPool2D(2,2))
-
-    # # Convolutional layer and maxpool layer 4
-    model.add(tf.keras.layers.Conv2D(128, (3,3), activation='relu'))
-    model.add(tf.keras.layers.MaxPool2D(2,2))
+        channels *= 2
 
     # Global pooling over each channel
     model.add(tf.keras.layers.GlobalAveragePooling2D())
     model.add(tf.keras.layers.Dense(512,activation='relu'))
 
     # Output binary prediction in range [0, 1]
-    # model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
+    model.add(tf.keras.layers.Dense(1, activation=activation))
 
     return model
+
+def CNNImageBinaryClassifier():
+    return CNNImageRegressor(activation='sigmoid')
