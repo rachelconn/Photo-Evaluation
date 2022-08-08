@@ -64,12 +64,12 @@ class ImageRegression:
         print(f'Saved model to {path}.')
 
     def load(self):
-        path = os.path.join('trained', self.model_name, 'final', 'model')
+        path = os.path.join(os.path.dirname(__file__), 'trained', self.model_name, 'final', 'model')
         try:
             self.network.load_weights(path)
             print(f'Loaded existing model from {path}')
         except:
-            print('Created new model')
+            print(f'No model found at {os.path.abspath(path)}.\nCreating new model...')
             return
 
 class ImageBinaryClassification(ImageRegression):
