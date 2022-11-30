@@ -104,5 +104,13 @@ def CNNImageRegressor(activation=None):
 
     return model
 
-def CNNImageBinaryClassifier():
-    return CNNImageRegressor(activation='sigmoid')
+def CNNImageBinaryClassifier(max_size=None):
+    model = tf.keras.Sequential()
+    image = tf.keras.Input(shape=(None, None, 3))
+
+    if max_size:
+        outputs = tf.image.resize(image, [800, 800], preserve_aspect_ratio=True)
+
+    outputs = CNNImageRegressor(activation='sigmoid')(image)
+
+    return tf.keras.Model(image, outputs)
