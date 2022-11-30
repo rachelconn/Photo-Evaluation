@@ -25,9 +25,9 @@ def process_request(request):
 def evaluate_photo(request):
     image = process_request(request)
     response = {
-        'exposure': exposure_model.predict(image),
-        'blur': blur_model.predict(image),
-        'noise': noise_model.predict(image),
+        'exposure': exposure_model.predict(image)[0][0],
+        'blur': blur_model.predict(image)[0][0],
+        'noise': noise_model.predict(image)[0][0],
     }
 
     return Response(response)
