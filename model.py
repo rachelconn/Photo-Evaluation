@@ -9,7 +9,6 @@ class ImageRegression:
         self.model_name = model_name
 
         self.network = CNNImageRegressor()
-
         self.optimizer = tf.keras.optimizers.Adam(
             learning_rate=3e-5,
         )
@@ -50,13 +49,26 @@ class ImageRegression:
         # Done training, save final model
         self.save('final')
 
-    def test(self, testing_dataset):
+    def test(self, testing_dataset, classification=False):
         testing_dataset = testing_dataset.batch(1)
+
+        total_loss = 0
+        correct = 0
+        samples = 0
+
         for image, exposure in testing_dataset:
             pred = self.network(image)
-            plt.imshow(tf.squeeze(image))
-            plt.title(f'Real: {exposure[0]}\nPredicted: {pred.numpy()[0][0]:3f}')
-            plt.show()
+            # plt.imshow(tf.squeeze(image))
+            # plt.title(f'Real: {exposure[0]}\nPredicted: {pred.numpy()[0][0]:3f}')
+            # plt.show()
+
+            samples += 1
+            total_loss += self.loss(exposure, pred)
+            if tf.math.round(pred) == exposure:
+                correct += 1
+        print(f'Overall loss: {total_loss / samples}')
+        if classification:
+            print(f'Overall accuracy: {correct / samples}')
 
     def save(self, name):
         path = os.path.join('trained', self.model_name, name, 'model')
@@ -93,19 +105,21 @@ class ImageBinaryClassification(ImageRegression):
             0.00005 (0.90)
     """
 
-    def __init__(self, batch_size, model_name, use_resnet=True):
-        super().__init__(batch_size, model_name)
+    def __init__(self, batch_size, model_name, max_size=(800, 800), use_resnet=True):
         self.batch_size = batch_size
+        self.model_name = model_name
 
-        self.network = CNNImageBinaryClassifier()
-
+        self.network = CNNImageBinaryClassifier(max_size)
         self.optimizer = tf.keras.optimizers.Adam(
             learning_rate=0.00005,
         )
-
         self.loss = tf.keras.losses.BinaryCrossentropy(from_logits=False)
         self.network.compile(
             optimizer=self.optimizer,
             loss=self.loss,
             metrics=['binary_accuracy'],
         )
+        self.load()
+
+    def test(self, testing_dataset):
+        super().test(testing_dataset, True)
