@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 import os
 import matplotlib.pyplot as plt
 import tensorflow as tf
@@ -17,14 +18,14 @@ parser.add_argument('--type', choices=['exposure', 'blur', 'noise'], required=Tr
 parser.add_argument('--name', required=True)
 args = parser.parse_args()
 
-EXPOSURE_TRAINING_DATASET_FOLDER = r'E:\photography\exposure\training\INPUT_IMAGES'
-EXPOSURE_VALIDATION_DATASET_FOLDER = r'E:\photography\exposure\validation\INPUT_IMAGES'
-EXPOSURE_TESTING_DATASET_FOLDER = r'E:\photography\exposure\testing\INPUT_IMAGES'
+EXPOSURE_TRAINING_DATASET_FOLDER = Path('a:/', 'Datasets', 'exposure', 'training', 'INPUT_IMAGES')
+EXPOSURE_VALIDATION_DATASET_FOLDER = Path('a:/', 'Datasets', 'exposure', 'validation', 'INPUT_IMAGES')
+EXPOSURE_TESTING_DATASET_FOLDER = Path('a:/', 'Datasets', 'exposure', 'testing', 'INPUT_IMAGES')
 
-BLUR_TRAINING_DATASET_FILE = r'E:\photography\blur\RealBlur_J_train_list.txt'
-BLUR_TESTING_DATASET_FILE = r'E:\photography\blur\RealBlur_J_test_list.txt'
+BLUR_TRAINING_DATASET_FILE = str(Path('a:/', 'Datasets', 'blur', 'RealBlur_J_train_list.txt'))
+BLUR_TESTING_DATASET_FILE = str(Path('a:/', 'Datasets', 'blur', 'RealBlur_J_test_list.txt'))
 
-NOISE_DATASET_FOLDER = r'E:\photography\noise\Data'
+NOISE_DATASET_FOLDER = str(Path('a:/', 'Datasets', 'noise', 'train'))
 
 def run_exposure_model(train=True):
     if train:
