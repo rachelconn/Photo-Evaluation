@@ -1,6 +1,8 @@
 import itertools
 import os
+from pathlib import Path
 import random
+
 import numpy as np
 from openpyxl import load_workbook
 import tensorflow as tf
@@ -128,6 +130,31 @@ def load_sidd_dataset(folder):
     dataset = tf.data.Dataset.from_generator(
         generate_sidd_dataset,
         args=(str(folder),),
+        output_signature=(
+            tf.TensorSpec(shape=(None, None, 3), dtype=tf.float32),
+            tf.TensorSpec(shape=(), dtype=tf.uint8),
+        ),
+    )
+
+    return dataset
+
+def generate_ebb_dataset(root_folder):
+    root_folder = root_folder.decode('utf-8')
+    # Determine files in dataset, then deterministically shuffle
+    files = list(Path(root_folder, 'bokeh').iterdir())
+    files.extend(Path(root_folder, 'original').iterdir())
+    random.seed(0)
+    random.shuffle(files)
+
+    for file in files:
+        image = tf.keras.utils.load_img(file)
+        label = 1 if file.parent.name == 'bokeh' else 0
+        yield image, label
+
+def load_ebb_dataset(root_folder):
+    dataset = tf.data.Dataset.from_generator(
+        generate_ebb_dataset,
+        args=(str(root_folder),),
         output_signature=(
             tf.TensorSpec(shape=(None, None, 3), dtype=tf.float32),
             tf.TensorSpec(shape=(), dtype=tf.uint8),
