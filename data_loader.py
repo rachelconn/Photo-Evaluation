@@ -58,7 +58,7 @@ def generate_realblur_dataset(list_file):
 def load_realblur_dataset(list_file):
         dataset = tf.data.Dataset.from_generator(
             generate_realblur_dataset,
-            args=(list_file,),
+            args=(str(list_file),),
             output_signature=(
                 tf.TensorSpec(shape=(None, None, 3), dtype=tf.float32),
                 tf.TensorSpec(shape=(), dtype=tf.float32),
@@ -81,7 +81,7 @@ def generate_certh_training_dataset(base_folder):
 def load_certh_training_dataset(folder):
     dataset = tf.data.Dataset.from_generator(
         generate_certh_training_dataset,
-        args=(folder,),
+        args=(str(folder),),
         output_signature=(
             tf.TensorSpec(shape=(None, None, 3), dtype=tf.float32),
             tf.TensorSpec(shape=(), dtype=tf.float32),
@@ -104,7 +104,7 @@ def generate_certh_testing_dataset(folder):
 def load_certh_testing_dataset(folder):
     dataset = tf.data.Dataset.from_generator(
         generate_certh_testing_dataset,
-        args=(folder,),
+        args=(str(folder),),
         output_signature=(
             tf.TensorSpec(shape=(None, None, 3), dtype=tf.float32),
             tf.TensorSpec(shape=(), dtype=tf.float32),
@@ -127,7 +127,7 @@ def generate_sidd_dataset(folder):
 def load_sidd_dataset(folder):
     dataset = tf.data.Dataset.from_generator(
         generate_sidd_dataset,
-        args=(folder,),
+        args=(str(folder),),
         output_signature=(
             tf.TensorSpec(shape=(None, None, 3), dtype=tf.float32),
             tf.TensorSpec(shape=(), dtype=tf.uint8),
