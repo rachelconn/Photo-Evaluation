@@ -6,6 +6,7 @@ import tensorflow as tf
 from data_loader import (
     load_certh_training_dataset,
     load_certh_testing_dataset,
+    load_ebb_dataset,
     load_exposure_dataset,
     load_realblur_dataset,
     load_sidd_dataset,
@@ -14,7 +15,7 @@ from model import ImageRegression, ImageBinaryClassification
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--mode', choices=['train', 'test'], required=True)
-parser.add_argument('--type', choices=['exposure', 'blur', 'noise'], required=True)
+parser.add_argument('--type', choices=['exposure', 'blur', 'noise', 'bokeh'], required=True)
 parser.add_argument('--name', required=True)
 args = parser.parse_args()
 
@@ -26,6 +27,8 @@ BLUR_TRAINING_DATASET_FILE = Path('a:/', 'Datasets', 'blur', 'RealBlur_J_train_l
 BLUR_TESTING_DATASET_FILE = Path('a:/', 'Datasets', 'blur', 'RealBlur_J_test_list.txt')
 
 NOISE_DATASET_FOLDER = Path('a:/', 'Datasets', 'noise', 'train')
+
+BOKEH_DATASET_FOLDER = Path('a:/', 'Datasets', 'EBB')
 
 def run_exposure_model(train=True):
     if train:
@@ -69,6 +72,26 @@ def run_noise_model(train=True):
     model = ImageBinaryClassification(1, args.name)
     if train:
         model.train(noise_training_dataset, noise_testing_dataset, 100)
+    model.test(noise_testing_dataset)
+
+def run_bokeh_model(train=True):
+    if train:
+        augmentations = tf.keras.Sequential([
+            tf.keras.layers.RandomFlip('horizontal'),
+        ])
+    else:
+        augmentations = tf.keras.Sequential([])
+
+    NUM_TRAINING_IMAGES = 9_000
+    bokeh_dataset = load_ebb_dataset(BOKEH_DATASET_FOLDER)
+    bokeh_dataset = bokeh_dataset.map(lambda x, y: (augmentations(x), y))
+    bokeh_training_dataset = bokeh_dataset.take(NUM_TRAINING_IMAGES)
+    bokeh_testing_dataset = bokeh_dataset.skip(NUM_TRAINING_IMAGES)
+
+    model = ImageBinaryClassification(1, args.name)
+    if train:
+        model.train(bokeh_training_dataset, bokeh_testing_dataset, 100)
+    model.test(bokeh_testing_dataset)
 
 if __name__ == '__main__':
     train = args.mode == 'train'
@@ -77,5 +100,7 @@ if __name__ == '__main__':
         run_exposure_model(train=train)
     elif args.type == 'blur':
         run_blur_model(train=train)
-    else:
+    elif args.type == 'noise':
         run_noise_model(train=train)
+    else:
+        run_bokeh_model(train=train)
