@@ -37,15 +37,13 @@ def process_request(request):
     image = tf.io.decode_base64(image)
     image = tf.io.decode_jpeg(image)
     image = tf.cast(image, 'float32') / 255
-    torch_image = torch.unsqueeze(torch.from_numpy(image.numpy()), 0)
+    torch_image = torch.unsqueeze(torch.from_numpy(image.numpy()), 0).cuda()
     return np.array([image]), torch.permute(torch_image, (0, 3, 1, 2))
 
 def get_focus_image(torch_image: torch.Tensor) -> str:
     """ Returns a base64-encoded image of the focus values given the torch tensor for an image """
     focus = focus_model(pixel_values=resize(torch_image))
-    focus = torch.squeeze(torch.argmax(focus.logits, dim=1))
-    # output_size = [[dim // 8 for dim in torch_image.size()[2:]]]
-    # focus = focus_processor.post_process_semantic_segmentation(focus, output_size)[0]
+    focus = torch.squeeze(torch.argmax(focus.logits, dim=1)).type(torch.ByteTensor)
     focus_image = Image.fromarray(focus.cpu().numpy(), mode='P')
     focus_image.putpalette([
         255, 0, 0,   # Out of focus: red
