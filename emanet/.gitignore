@@ -1,0 +1,6 @@
+# Virtual environments
+*env/
+
+# Data from training/testing runs
+logdir/
+models/

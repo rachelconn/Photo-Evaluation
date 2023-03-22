@@ -1,0 +1,6 @@
+matplotlib==3.5.2
+pillow
+scipy==1.9.3
+torch>=0.4.1
+torchvision
+tensorboardX
