@@ -34,10 +34,11 @@ def run_exposure_model(train=True):
     if train:
         augmentations = tf.keras.Sequential([
             tf.keras.layers.RandomFlip('horizontal'),
+            tf.keras.layers.RandomRotation(0.25),
+            tf.keras.layers.RandomZoom(0.2, 0.2),
         ])
     else:
-        augmentations = tf.keras.Sequential([
-        ])
+        augmentations = tf.keras.Sequential([])
 
     exposure_training_dataset = load_exposure_dataset(EXPOSURE_TRAINING_DATASET_FOLDER)
     exposure_training_dataset = exposure_training_dataset.map(lambda x, y: (augmentations(x), y))
