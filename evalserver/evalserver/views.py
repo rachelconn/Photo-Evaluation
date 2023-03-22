@@ -24,6 +24,8 @@ tf.config.experimental.set_memory_growth(physical_devices[0], True)
 exposure_model = ImageRegression(1, 'exposure').network
 blur_model = ImageBinaryClassification(1, 'blur').network
 noise_model = ImageBinaryClassification(1, 'noise').network
+bokeh_model = ImageBinaryClassification(1, 'bokeh').network
+
 focus_model, *_ = load_model('eval')
 focus_model.eval()
 focus_processor = BeitImageProcessor()
@@ -41,8 +43,9 @@ def process_request(request):
 def get_focus_image(torch_image: torch.Tensor) -> str:
     """ Returns a base64-encoded image of the focus values given the torch tensor for an image """
     focus = focus_model(pixel_values=resize(torch_image))
-    output_size = [[dim // 8 for dim in torch_image.size()[2:]]]
-    focus = focus_processor.post_process_semantic_segmentation(focus, output_size)[0]
+    focus = torch.squeeze(torch.argmax(focus.logits, dim=1))
+    # output_size = [[dim // 8 for dim in torch_image.size()[2:]]]
+    # focus = focus_processor.post_process_semantic_segmentation(focus, output_size)[0]
     focus_image = Image.fromarray(focus.cpu().numpy(), mode='P')
     focus_image.putpalette([
         255, 0, 0,   # Out of focus: red
@@ -62,6 +65,7 @@ def evaluate_photo(request):
         exposure=exposure_model.predict(tf_image)[0][0],
         blur=blur_model.predict(tf_image)[0][0],
         noise=noise_model.predict(tf_image)[0][0],
+        bokeh=bokeh_model.predict(tf_image)[0][0],
         focus=focus_image,
     )
 
