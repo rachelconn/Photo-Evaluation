@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from data_loader import (
+    load_blur_type_dataset,
     load_certh_training_dataset,
     load_certh_testing_dataset,
     load_ebb_dataset,
@@ -11,11 +12,16 @@ from data_loader import (
     load_realblur_dataset,
     load_sidd_dataset,
 )
-from model import ImageRegression, ImageBinaryClassification
+from model import (
+    ImageBinaryClassification,
+    ImageClassification,
+    ImageRegression,
+)
 
 parser = argparse.ArgumentParser()
+model_types = ['exposure', 'blur', 'blur_type', 'noise', 'bokeh']
 parser.add_argument('--mode', choices=['train', 'test'], required=True)
-parser.add_argument('--type', choices=['exposure', 'blur', 'noise', 'bokeh'], required=True)
+parser.add_argument('--type', choices=model_types, required=True)
 parser.add_argument('--name', required=True)
 args = parser.parse_args()
 
@@ -25,6 +31,8 @@ EXPOSURE_TESTING_DATASET_FOLDER = Path('a:/', 'Datasets', 'exposure', 'testing',
 
 BLUR_TRAINING_DATASET_FILE = Path('a:/', 'Datasets', 'blur', 'RealBlur_J_train_list.txt')
 BLUR_TESTING_DATASET_FILE = Path('a:/', 'Datasets', 'blur', 'RealBlur_J_test_list.txt')
+
+BLUR_TYPE_DATASET_FOLDER = Path('a:/', 'Datasets', 'blurtype')
 
 NOISE_DATASET_FOLDER = Path('a:/', 'Datasets', 'noise', 'train')
 
@@ -59,10 +67,33 @@ def run_blur_model(train=True):
     blur_training_dataset = blur_training_dataset.map(lambda x, y: (augmentations(x), y))
     blur_testing_dataset = load_realblur_dataset(BLUR_TESTING_DATASET_FILE)
 
+    # TODO: don't resize image
     model = ImageBinaryClassification(1, args.name)
     if train:
         model.train(blur_training_dataset, blur_testing_dataset, 100)
     model.test(blur_testing_dataset)
+
+def run_blur_type_model(train=True):
+    NUM_TRAINING_IMAGES = 1_000
+
+    augmentations = tf.keras.Sequential([
+        tf.keras.layers.RandomFlip(),
+        # tf.keras.layers.RandomBrightness(0.1, value_range=(0, 1)),
+        # tf.keras.layers.RandomContrast(0.1),
+        # tf.keras.layers.RandomCrop(800, 800)
+    ])
+
+    blur_type_dataset = load_blur_type_dataset(BLUR_TYPE_DATASET_FOLDER)
+    blur_type_dataset = blur_type_dataset.map(lambda x, y: (augmentations(x), y))
+    blur_type_training_dataset = blur_type_dataset.take(NUM_TRAINING_IMAGES)
+    blur_type_testing_dataset = blur_type_dataset.skip(NUM_TRAINING_IMAGES)
+
+    # TODO: don't resize image
+    # TODO: see if performing augmentation here helps
+    model = ImageClassification(3, 1, args.name)
+    if train:
+        model.train(blur_type_training_dataset, blur_type_testing_dataset, 100)
+    model.test(blur_type_testing_dataset)
 
 def run_noise_model(train=True):
     NUM_TRAINING_IMAGES = 600
@@ -78,7 +109,7 @@ def run_noise_model(train=True):
 def run_bokeh_model(train=True):
     if train:
         augmentations = tf.keras.Sequential([
-            tf.keras.layers.RandomFlip('horizontal'),
+            tf.keras.layers.RandomFlip(),
         ])
     else:
         augmentations = tf.keras.Sequential([])
@@ -101,7 +132,12 @@ if __name__ == '__main__':
         run_exposure_model(train=train)
     elif args.type == 'blur':
         run_blur_model(train=train)
+    elif args.type == 'blur_type':
+        run_blur_type_model(train=train)
     elif args.type == 'noise':
         run_noise_model(train=train)
-    else:
+    elif args.type == 'bokeh':
         run_bokeh_model(train=train)
+    else:
+        print(f'Unsupported type {args.type}.\n  Supported types: {(", ".join(model_types))}.')
+        exit(1)
