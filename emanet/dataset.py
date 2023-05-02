@@ -46,6 +46,20 @@ def rotate(image, label=None):
     label = transforms.functional.rotate(label, angle, fill=255)
     return image, label
 
+def scale(image, label=None):
+    scale_factor = random.choice(settings.SCALE_VALUES)
+    image = torch.nn.functional.interpolate(
+        image,
+        scale_factor=scale_factor,
+        mode='nearest-exact',
+    )
+    label = torch.nn.functional.interpolate(
+        label,
+        scale_factor=scale_factor,
+        mode='nearest-exact',
+    )
+    return image, label
+
 """ Dataset classes """
 # TODO: make sure during validation, images are squished to 224x224 and that during training images with improper aspect ratios are used
 class BaseDataset(Dataset):
@@ -96,6 +110,7 @@ class TrainDataset(BaseDataset):
 
         # Perform augmentation
         image, label = crop(image, label)
+        image, label = scale(image, label)
         image, label = flip(image, label)
         image, label = adjust_brightness(image, label)
         # image, label = rotate(image, label)
@@ -129,7 +144,8 @@ def create_dataloader(dataset):
     training = isinstance(dataset, TrainDataset)
     return DataLoader(
         dataset,
-        batch_size=settings.BATCH_SIZE if training else 1,
+        batch_size=1,
+        # batch_size=settings.BATCH_SIZE if training else 1,
         num_workers=settings.NUM_WORKERS,
         shuffle=training,
         collate_fn=_collate_fn,

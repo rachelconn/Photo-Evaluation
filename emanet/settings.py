@@ -12,28 +12,28 @@ from torch import Tensor
 DATASET_FOLDER = Path('a:/', 'Datasets', 'blurdetection')
 MEAN = Tensor(np.array([0.485, 0.456, 0.406]))
 STD = Tensor(np.array([0.229, 0.224, 0.225]))
-SCALE_VALUES = (0.5, 0.6, 0.75, 1.0, 1.25, 1.5)
+SCALE_VALUES = (0.5, 1.0)
 CROP_SIZE = 257
 IGNORE_LABEL = 255
 TRAIN_DATA_RATIO = 0.975
 
 # Eval settings
-SHOW_EVAL = True
+SHOW_EVAL = False
 
 # Model definition
 MODEL_TYPE = 'isgeological'
-MODEL_DIR = Path(__file__).resolve().parent / 'models' / 'focus_16stride'
+MODEL_DIR = Path(__file__).resolve().parent / 'models' / 'focus'
 
 N_LAYERS = 50
 STRIDE = 16
 BN_MOM = 3e-4
 EM_MOM = 0.9
-STAGE_NUM = 3
+STAGE_NUM = 1
 
 # Training settings
 BATCH_SIZE = 16
-ITER_MAX = 40_000
-ITER_SAVE = 2_000
+ITER_MAX = 40_000 * BATCH_SIZE
+ITER_SAVE = 2_000 * BATCH_SIZE
 
 LR_DECAY = 10
 LR = 9e-3
