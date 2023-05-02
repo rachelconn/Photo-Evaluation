@@ -69,6 +69,40 @@ def load_realblur_dataset(list_file):
 
         return dataset
 
+def generate_blur_type_dataset(base_folder):
+    base_folder = Path(base_folder.decode('utf-8'))
+
+    label_key = {
+        'sharp': 0,
+        'motion_blurred': 1,
+        'defocused_blurred': 2,
+    }
+
+    samples = list(Path(base_folder, 'sharp').iterdir())
+    samples.extend(Path(base_folder, 'motion_blurred').iterdir())
+    samples.extend(Path(base_folder, 'defocused_blurred').iterdir())
+    random.seed(0)
+    random.shuffle(samples)
+    for image_file in samples:
+        image = tf.keras.utils.load_img(image_file)
+        image = np.array(image) / 255
+
+        label = label_key[image_file.parent.name]
+
+        yield image, label
+
+def load_blur_type_dataset(folder):
+    dataset = tf.data.Dataset.from_generator(
+        generate_blur_type_dataset,
+        args=(str(folder),),
+        output_signature=(
+            tf.TensorSpec(shape=(None, None, 3), dtype=tf.float32),
+            tf.TensorSpec(shape=(), dtype=tf.float32),
+        ),
+    )
+
+    return dataset
+
 def generate_certh_training_dataset(base_folder):
     folders = {
         os.path.join(base_folder, b'Undistorted'): 0,
@@ -148,6 +182,7 @@ def generate_ebb_dataset(root_folder):
 
     for file in files:
         image = tf.keras.utils.load_img(file)
+        image = np.array(image) / 255
         label = 1 if file.parent.name == 'bokeh' else 0
         yield image, label
 
