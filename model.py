@@ -1,7 +1,14 @@
 import os
 from matplotlib import pyplot as plt
 import tensorflow as tf
-from network import ImageRegressor, ImageBinaryClassifier, ResNetImageRegressor, CNNImageRegressor, CNNImageBinaryClassifier
+from network import (
+    ImageRegressor,
+    ImageBinaryClassifier,
+    ResNetImageRegressor,
+    CNNImageRegressor,
+    CNNImageBinaryClassifier,
+    CNNImageClassifier,
+)
 
 class ImageRegression:
     def __init__(self, batch_size, model_name):
@@ -26,12 +33,6 @@ class ImageRegression:
         best_val_loss = float('inf')
 
         for epoch in range(1, num_epochs + 1):
-            # for x, y in training_dataset:
-            #     y_p = self.network(x)
-            #     print(f'y    : {y}')
-            #     print(f'Preds: {y_p}')
-            #     print(f'Loss: {self.network.loss(y, y_p)}')
-            #     print(f'Vals: {tf.nn.sigmoid(y_p)}')
             hist = self.network.fit(
                 x=training_dataset,
                 validation_data=validation_dataset,
@@ -105,7 +106,7 @@ class ImageBinaryClassification(ImageRegression):
             0.00005 (0.90)
     """
 
-    def __init__(self, batch_size, model_name, max_size=(800, 800), use_resnet=True):
+    def __init__(self, batch_size, model_name, max_size=(800, 800)):
         self.batch_size = batch_size
         self.model_name = model_name
 
@@ -118,6 +119,26 @@ class ImageBinaryClassification(ImageRegression):
             optimizer=self.optimizer,
             loss=self.loss,
             metrics=['binary_accuracy'],
+        )
+        self.load()
+
+    def test(self, testing_dataset):
+        super().test(testing_dataset, True)
+
+class ImageClassification(ImageRegression):
+    def __init__(self, num_classes, batch_size, model_name, max_size=(800, 800)):
+        self.batch_size = batch_size
+        self.model_name = model_name
+
+        self.network = CNNImageClassifier(3, max_size)
+        self.optimizer = tf.keras.optimizers.Adam(
+            learning_rate=0.00005,
+        )
+        self.loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False)
+        self.network.compile(
+            optimizer=self.optimizer,
+            loss=self.loss,
+            metrics=['sparse_categorical_accuracy'],
         )
         self.load()
 

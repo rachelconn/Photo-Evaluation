@@ -80,7 +80,7 @@ def ResNetImageRegressor():
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
     return model
 
-def CNNImageRegressor(activation=None):
+def CNNImageRegressor(activation=None, num_classes=1):
     model = tf.keras.Sequential()
 
     channels = 16
@@ -100,7 +100,7 @@ def CNNImageRegressor(activation=None):
     model.add(tf.keras.layers.Dense(512,activation='relu'))
 
     # Output binary prediction in range [0, 1]
-    model.add(tf.keras.layers.Dense(1, activation=activation))
+    model.add(tf.keras.layers.Dense(num_classes, activation=activation))
 
     return model
 
@@ -109,8 +109,19 @@ def CNNImageBinaryClassifier(max_size=None):
     image = tf.keras.Input(shape=(None, None, 3))
 
     if max_size:
-        outputs = tf.image.resize(image, [800, 800], preserve_aspect_ratio=True)
+        outputs = tf.image.resize(image, max_size, preserve_aspect_ratio=True)
 
     outputs = CNNImageRegressor(activation='sigmoid')(image)
+
+    return tf.keras.Model(image, outputs)
+
+def CNNImageClassifier(num_classes, max_size=None):
+    model = tf.keras.Sequential()
+    image = tf.keras.Input(shape=(None, None, 3))
+
+    if max_size:
+        outputs = tf.image.resize(image, max_size, preserve_aspect_ratio=True)
+
+    outputs = CNNImageRegressor(activation='sigmoid', num_classes=num_classes)(image)
 
     return tf.keras.Model(image, outputs)
