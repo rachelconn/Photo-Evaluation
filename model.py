@@ -1,9 +1,8 @@
 import os
 from matplotlib import pyplot as plt
 import tensorflow as tf
+import keras
 from network import (
-    ImageRegressor,
-    ImageBinaryClassifier,
     ResNetImageRegressor,
     CNNImageRegressor,
     CNNImageBinaryClassifier,
@@ -16,10 +15,10 @@ class ImageRegression:
         self.model_name = model_name
 
         self.network = CNNImageRegressor()
-        self.optimizer = tf.keras.optimizers.Adam(
+        self.optimizer = keras.optimizers.Adam(
             learning_rate=3e-5,
         )
-        self.loss = tf.keras.losses.MeanSquaredError()
+        self.loss = keras.losses.MeanSquaredError()
         self.network.compile(
             optimizer=self.optimizer,
             loss=self.loss,
@@ -38,7 +37,6 @@ class ImageRegression:
                 validation_data=validation_dataset,
                 epochs=1,
             )
-            print(f'New LR: {self.network.optimizer._decayed_lr(tf.float32).numpy()}')
 
             val_loss = hist.history['val_loss'][-1]
             is_best = val_loss < best_val_loss
@@ -111,10 +109,10 @@ class ImageBinaryClassification(ImageRegression):
         self.model_name = model_name
 
         self.network = CNNImageBinaryClassifier(max_size)
-        self.optimizer = tf.keras.optimizers.Adam(
+        self.optimizer = keras.optimizers.Adam(
             learning_rate=0.00005,
         )
-        self.loss = tf.keras.losses.BinaryCrossentropy(from_logits=False)
+        self.loss = keras.losses.BinaryCrossentropy(from_logits=False)
         self.network.compile(
             optimizer=self.optimizer,
             loss=self.loss,
@@ -131,10 +129,10 @@ class ImageClassification(ImageRegression):
         self.model_name = model_name
 
         self.network = CNNImageClassifier(3, max_size)
-        self.optimizer = tf.keras.optimizers.Adam(
+        self.optimizer = keras.optimizers.Adam(
             learning_rate=0.00005,
         )
-        self.loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False)
+        self.loss = keras.losses.SparseCategoricalCrossentropy(from_logits=False)
         self.network.compile(
             optimizer=self.optimizer,
             loss=self.loss,

@@ -6,10 +6,11 @@ import random
 import numpy as np
 from openpyxl import load_workbook
 import tensorflow as tf
+import keras
 
 def get_exposure_dataset_item(filename):
     # Load image
-    image = tf.keras.utils.load_img(filename, target_size=(256, 256), interpolation='bilinear')
+    image = keras.utils.load_img(filename, target_size=(256, 256), interpolation='bilinear')
     image = np.array(image) / 255
 
     # Parse label into float - labels in filename are either N<number>, 0, or P<number>
@@ -44,7 +45,7 @@ def load_exposure_dataset(folder):
 
 def get_blur_dataset_item(filename, label):
     # Load image
-    image = tf.keras.utils.load_img(filename)
+    image = keras.utils.load_img(filename)
     image = np.array(image) / 255
 
     return image, label
@@ -84,7 +85,7 @@ def generate_blur_type_dataset(base_folder):
     random.seed(0)
     random.shuffle(samples)
     for image_file in samples:
-        image = tf.keras.utils.load_img(image_file)
+        image = keras.utils.load_img(image_file)
         image = np.array(image) / 255
 
         label = label_key[image_file.parent.name]
@@ -155,7 +156,7 @@ def generate_sidd_dataset(folder):
         subfolder_path = os.path.join(folder, subfolder)
         for filename in os.listdir(subfolder_path):
             _, label_string, *_ = filename.split('_')
-            image = tf.keras.utils.load_img(os.path.join(subfolder_path, filename))
+            image = keras.utils.load_img(os.path.join(subfolder_path, filename))
             image = np.array(image) / 255
             label = 1 if label_string == 'NOISY' else 0
             yield image, label
@@ -181,7 +182,7 @@ def generate_ebb_dataset(root_folder):
     random.shuffle(files)
 
     for file in files:
-        image = tf.keras.utils.load_img(file)
+        image = keras.utils.load_img(file)
         image = np.array(image) / 255
         label = 1 if file.parent.name == 'bokeh' else 0
         yield image, label
