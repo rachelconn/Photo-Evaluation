@@ -7,28 +7,32 @@ import numpy as np
 from PIL import Image, ImageOps
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
-import tensorflow as tf
 import torch
 import torchvision.transforms.functional as F
-from transformers import BeitImageProcessor
+import tensorflow as tf
 
 sys.path.append(path.abspath(path.join(path.dirname(__file__), '..', '..')))
-from model import ImageRegression, ImageBinaryClassification
-from beit.utils import load_model
-from beit.dataset import resize
+from model import (
+    create_exposure_model,
+    create_blur_type_model,
+    create_noise_model,
+    create_bokeh_model,
+)
 from emanet.network import EMANet
 from emanet import settings as emanet_settings
 from matplotlib import pyplot as plt
 
-# Create tf configuration with dynamic memory allocation
+# Create TF configuration with dynamic memory allocation
 physical_devices = tf.config.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
-exposure_model = ImageRegression(1, 'exposure').network
-blur_model = ImageBinaryClassification(1, 'blur').network
-noise_model = ImageBinaryClassification(1, 'noise').network
-bokeh_model = ImageBinaryClassification(1, 'bokeh').network
+# Load TF models
+blur_type_model = create_blur_type_model('blur_type').network
+bokeh_model = create_bokeh_model('bokeh').network
+exposure_model = create_exposure_model('exposure').network
+noise_model = create_noise_model('noise').network
 
+# Load pytorch model
 focus_model = EMANet(emanet_settings.N_CLASSES, emanet_settings.N_LAYERS).cuda()
 state_dict = torch.load(emanet_settings.MODEL_DIR / 'final.pth', map_location=lambda storage, loc: storage.cuda())
 focus_model.load_state_dict(state_dict['net'])
@@ -66,19 +70,27 @@ def get_focus_image(torch_image: torch.Tensor) -> str:
     ])
     focus_file = BytesIO()
     focus_image.save(focus_file, format="PNG")
-    return base64.b64encode(focus_file.getvalue())
+    focus_image = base64.b64encode(focus_file.getvalue())
+
+    # Determine how much of the image is focused
+    percent_in_focus = torch.sum(focus == 0) / torch.numel(focus) * 100
+
+    return focus_image, percent_in_focus
 
 # Create your views here.
 @api_view(['POST'])
 def evaluate_photo(request):
     tf_image, torch_image = process_request(request)
-    focus_image = get_focus_image(torch_image)
+    focus_image, percent_in_focus = get_focus_image(torch_image)
+    blur_type_logits = blur_type_model.predict(tf_image)[0]
+    blur_type = tf.get_static_value(tf.math.argmax(blur_type_logits))
 
     response = dict(
-        blur=blur_model.predict(tf_image)[0][0],
+        blurType=blur_type,
         bokeh=bokeh_model.predict(tf_image)[0][0],
         exposure=exposure_model.predict(tf_image)[0][0],
         focus=focus_image,
+        percentInFocus=percent_in_focus,
         noise=noise_model.predict(tf_image)[0][0],
     )
 
