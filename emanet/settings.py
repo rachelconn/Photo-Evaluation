@@ -9,7 +9,7 @@ from torch import Tensor
 # Larger crop size, batch size
 
 # Data settings
-DATASET_FOLDER = Path('a:/', 'Datasets', 'blurdetection')
+DATASET_FOLDER = Path('/mnt', 'a', 'Datasets', 'blurdetection')
 MEAN = Tensor(np.array([0.485, 0.456, 0.406]))
 STD = Tensor(np.array([0.229, 0.224, 0.225]))
 SCALE_VALUES = (0.5, 1.0)

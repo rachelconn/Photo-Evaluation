@@ -3,25 +3,27 @@ from matplotlib import pyplot as plt
 import tensorflow as tf
 import keras
 from network import (
-    ResNetImageRegressor,
     CNNImageRegressor,
     CNNImageBinaryClassifier,
     CNNImageClassifier,
 )
 
 class ImageRegression:
-    def __init__(self, batch_size, model_name):
+    def __init__(self, model_name, *, batch_size=1, blocks=[1, 3]):
         self.batch_size = batch_size
         self.model_name = model_name
 
-        self.network = CNNImageRegressor()
+        self.network = CNNImageRegressor(
+            blocks=blocks,
+        )
         self.optimizer = keras.optimizers.Adam(
-            learning_rate=3e-5,
+            learning_rate=0.00005,
         )
         self.loss = keras.losses.MeanSquaredError()
         self.network.compile(
             optimizer=self.optimizer,
             loss=self.loss,
+            metrics=['mean_squared_error']
         )
         self.load()
 
@@ -63,6 +65,7 @@ class ImageRegression:
 
             samples += 1
             total_loss += self.loss(exposure, pred)
+            # TODO: this doesn't work or matter for regression or classification models
             if tf.math.round(pred) == exposure:
                 correct += 1
         print(f'Overall loss: {total_loss / samples}')
@@ -70,14 +73,14 @@ class ImageRegression:
             print(f'Overall accuracy: {correct / samples}')
 
     def save(self, name):
-        path = os.path.join('trained', self.model_name, name, 'model')
+        path = os.path.join(os.path.dirname(__file__), 'trained', self.model_name, name, 'model')
         self.network.save_weights(path)
         print(f'Saved model to {path}.')
 
     def load(self):
         path = os.path.join(os.path.dirname(__file__), 'trained', self.model_name, 'final', 'model')
         try:
-            self.network.load_weights(path)
+            self.network.load_weights(path).expect_partial()
             print(f'Loaded existing model from {path}')
         except:
             print(f'No model found at {os.path.abspath(path)}.\nCreating new model...')
@@ -85,30 +88,21 @@ class ImageRegression:
 
 class ImageBinaryClassification(ImageRegression):
     """
-    Cats + Dogs
-        LR for CNN:
-            0.0005 (0.79 acc)
-        LR for resnet:
-            0.0005 (0.53 acc)
-            0.00025 (0.57)
-            0.00001 (each epoch: 0.56, 0.62, 0.68, 0.75)
     Blur
-        CNN:
-            0.00025 (0.58)
-            0.0001  (0.61)
-        Resnet:
-            0.000001 (0.5, not just guessing one label)
-            0.0000005 (same)
+        0.00025 (0.58)
+        0.0001  (0.61)
     RealBlur
-        CNN:
-            0.00005 (0.90)
+        0.00005 (0.90)
     """
 
-    def __init__(self, batch_size, model_name, max_size=(800, 800)):
+    def __init__(self, model_name, *, batch_size=1, max_size=(800, 800), blocks=[1, 3]):
         self.batch_size = batch_size
         self.model_name = model_name
 
-        self.network = CNNImageBinaryClassifier(max_size)
+        self.network = CNNImageBinaryClassifier(
+            max_size=max_size,
+            blocks=blocks,
+        )
         self.optimizer = keras.optimizers.Adam(
             learning_rate=0.00005,
         )
@@ -124,11 +118,15 @@ class ImageBinaryClassification(ImageRegression):
         super().test(testing_dataset, True)
 
 class ImageClassification(ImageRegression):
-    def __init__(self, num_classes, batch_size, model_name, max_size=(800, 800)):
+    def __init__(self, model_name, *, batch_size=1, num_classes, max_size=(800, 800), blocks=[1, 3]):
         self.batch_size = batch_size
         self.model_name = model_name
 
-        self.network = CNNImageClassifier(3, max_size)
+        self.network = CNNImageClassifier(
+            num_classes=3,
+            max_size=max_size,
+            blocks=blocks,
+        )
         self.optimizer = keras.optimizers.Adam(
             learning_rate=0.00005,
         )
@@ -142,3 +140,19 @@ class ImageClassification(ImageRegression):
 
     def test(self, testing_dataset):
         super().test(testing_dataset, True)
+
+# Functions to generate specific model instances for tasks (ensures sync between training and )
+def create_exposure_model(name):
+    return ImageRegression(name, batch_size=4, blocks=[1, 3, 3])
+
+def create_blur_model(name):
+    return ImageBinaryClassification(name, blocks=[1, 3, 3])
+
+def create_blur_type_model(name):
+    return ImageClassification(name, num_classes=3, blocks=[1, 3, 3])
+
+def create_noise_model(name):
+    return ImageBinaryClassification(name, blocks=[1, 3, 3])
+
+def create_bokeh_model(name):
+    return ImageBinaryClassification(name, blocks=[1, 3, 3])
