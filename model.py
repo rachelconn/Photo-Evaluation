@@ -50,27 +50,48 @@ class ImageRegression:
         # Done training, save final model
         self.save('final')
 
-    def test(self, testing_dataset, classification=False):
+    def test(self, testing_dataset, classification=False, multiclass=False):
         testing_dataset = testing_dataset.batch(1)
 
         total_loss = 0
-        correct = 0
+        num_correct = 0
         samples = 0
 
-        for image, exposure in testing_dataset:
+        for image, label in testing_dataset:
             pred = self.network(image)
             # plt.imshow(tf.squeeze(image))
             # plt.title(f'Real: {exposure[0]}\nPredicted: {pred.numpy()[0][0]:3f}')
             # plt.show()
 
             samples += 1
-            total_loss += self.loss(exposure, pred)
-            # TODO: this doesn't work or matter for regression or classification models
-            if tf.math.round(pred) == exposure:
-                correct += 1
+            total_loss += self.loss(label, pred)
+            if classification:
+                predicted_class = tf.cast(tf.math.argmax(pred, axis=1), tf.float32) if multiclass else tf.math.round(pred)
+                if predicted_class == label:
+                    num_correct += 1
         print(f'Overall loss: {total_loss / samples}')
         if classification:
-            print(f'Overall accuracy: {correct / samples}')
+            print(f'Overall accuracy: {num_correct / samples}')
+
+    def get_dataset_statistics(self, dataset):
+        dataset = dataset.batch(1)
+
+        # Iterate over dataset
+        sum_mean = tf.constant([0., 0., 0.])
+        sum_std = tf.constant([0., 0., 0.])
+        samples = 0
+        for image, _ in dataset:
+            sum_mean += tf.math.reduce_mean(image, axis=(0, 1, 2))
+            sum_std += tf.math.reduce_std(image, axis=(0, 1, 2))
+            samples += 1
+            if samples % 100 == 0:
+                print(f'Completed: {samples}')
+
+        # Average means and stdev values
+        means = sum_mean / samples
+        stds = sum_std / samples
+        print(f'Channel means: {means}')
+        print(f'Channel stds: {stds}')
 
     def save(self, name):
         path = os.path.join(os.path.dirname(__file__), 'trained', self.model_name, name, 'model')
@@ -139,7 +160,7 @@ class ImageClassification(ImageRegression):
         self.load()
 
     def test(self, testing_dataset):
-        super().test(testing_dataset, True)
+        super().test(testing_dataset, True, True)
 
 # Functions to generate specific model instances for tasks (ensures sync between training and )
 def create_exposure_model(name):
