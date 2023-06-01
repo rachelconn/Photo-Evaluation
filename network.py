@@ -16,9 +16,17 @@ def ResNetImageRegressor(activation=None):
     return model
 
 def CNNImageRegressor(*, activation=None, num_classes=1, blocks=[1, 3]):
+    # Dataset mean and stdev per channel - from bokeh dataset
+    CHANNEL_MEANS = tf.constant([110.33158,  108.660904, 100.70173])
+    CHANNEL_STDEVS = tf.constant([56.15182, 55.05964, 57.52548])
+    CHANNEL_VARS = tf.math.square(CHANNEL_STDEVS)
+
     # Create input layer
     model = keras.Sequential()
     model.add(keras.layers.InputLayer((None, None, 3)))
+
+    # Normalize input
+    model.add(keras.layers.Normalization(mean=CHANNEL_MEANS, variance=CHANNEL_VARS))
 
     # Create convolutional layers
     channels = 16
